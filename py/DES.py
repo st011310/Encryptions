@@ -3,7 +3,7 @@ from str_work import str_ex
 from str_work import str_left_shift
 from str_work import str_xor
 from str_work import str_permutation
-from Feistel_cipher import FeistelCipher_E
+from Feistel_cipher import FeistelCipher_D
 
 STANDART_PERMUTATION = [
     58, 50, 42, 34, 26, 18, 10, 2,
@@ -154,5 +154,55 @@ def DES_E(K, P, r = 16, block_size = 32, IP = STANDART_PERMUTATION):
         ans = str_permutation(ans, FINAL_S_PERMUTATION)
         print(ans)
         return ans
-    C = FeistelCipher_E(P, F, subkeys, block_size)
-    return P
+    C = FeistelCipher_D(P, F, list(reversed(subkeys)), block_size)
+    return C
+
+def DES_D(C, P, r = 16, block_size = 32, IP = STANDART_PERMUTATION):
+    if len(C) != 64:
+        raise Exception("DES can't have a not 64 bits key")
+
+    print('Редуцируем размер ключа:')
+    K = str_ex(K, REDUCTION_64_TO_56)
+    print(K)
+    print('Находим все подключи:')
+    K_half = len(K) // 2
+    subkeys = [K]
+    for i in range(r):
+        tmp1 = subkeys[i][:K_half]
+        tmp2 = subkeys[i][K_half:]
+        tmp1 = str_left_shift(tmp1, STANDART_SHIFTS[i])
+        tmp2 = str_left_shift(tmp2, STANDART_SHIFTS[i])
+        subkeys.append(tmp1 + tmp2)
+        print(tmp1, tmp2)
+    del subkeys[0]
+    print('Сжимаем все подключи до 48 бит:')
+    for i in range(r):
+        subkeys[i] = str_ex(subkeys[i], REDUCTION_56_TO_48)
+        print(subkeys[i])
+    def F(R, K):
+        print("Расширим правый блок до 48 бит:")
+        R = str_ex(R, EXPANSION_PLANTTEXT)
+        print(R)
+        print("Получим XOR от ключа и правого блока:")
+        pred_ans = str_xor(R, K)#48 bits
+        print(pred_ans)
+        ans = ""
+        for i in range(0, len(pred_ans), 6):
+            print(f"Преобразуем блок S{i//6}.")
+            tmp = pred_ans[i: i + 6]
+            print(f"S{i//6} = {tmp}")
+            row = int(tmp[0] + tmp[5], base = 2)
+            column = int(tmp[1:5], base = 2)
+            tmp = SUPER_BLOCK_TRANSFORMATION[i // 6][row][column]
+            tmp = bin(tmp)[2:]
+            tmp = "0" * (4 - len(tmp)) + tmp 
+            print(f"S{i//6} := T[{row}][{column}] = {tmp}")
+            ans += tmp
+        print("В результате получаем предложение:")
+        print(ans)
+        print("Сделаем заключительную перестановку:")
+        ans = str_permutation(ans, FINAL_S_PERMUTATION)
+        print(ans)
+        return ans
+    C = FeistelCipher_E(P, F, list(reversed(subkeys)), block_size)
+    return C
