@@ -4,6 +4,7 @@ from str_work import str_left_shift
 from str_work import str_xor
 from str_work import str_permutation
 from Feistel_cipher import FeistelCipher_D
+from Feistel_cipher import FeistelCipher_E
 
 STANDART_PERMUTATION = [
     58, 50, 42, 34, 26, 18, 10, 2,
@@ -107,7 +108,7 @@ if(not is_permutstion(STANDART_PERMUTATION)):
     raise Exception("STANDART_PERMUTATION is not permutstion")
 
 
-def DES_E(K, P, r = 16, block_size = 32, IP = STANDART_PERMUTATION):
+def DES_E(P, K, r = 16, block_size = 32, IP = STANDART_PERMUTATION):
     if len(K) != 64:
         raise Exception("DES can't have a not 64 bits key")
 
@@ -157,8 +158,40 @@ def DES_E(K, P, r = 16, block_size = 32, IP = STANDART_PERMUTATION):
     C = FeistelCipher_D(P, F, list(reversed(subkeys)), block_size)
     return C
 
-def DES_D(C, P, r = 16, block_size = 32, IP = STANDART_PERMUTATION):
-    if len(C) != 64:
+def DES_E_Q(P, K, r = 16, block_size = 32, IP = STANDART_PERMUTATION):
+    if len(K) != 64:
+        raise Exception("DES can't have a not 64 bits key")
+    K = str_ex(K, REDUCTION_64_TO_56)
+    K_half = len(K) // 2
+    subkeys = [K]
+    for i in range(r):
+        tmp1 = subkeys[i][:K_half]
+        tmp2 = subkeys[i][K_half:]
+        tmp1 = str_left_shift(tmp1, STANDART_SHIFTS[i])
+        tmp2 = str_left_shift(tmp2, STANDART_SHIFTS[i])
+        subkeys.append(tmp1 + tmp2)
+    del subkeys[0]
+    for i in range(r):
+        subkeys[i] = str_ex(subkeys[i], REDUCTION_56_TO_48)
+    def F(R, K):
+        R = str_ex(R, EXPANSION_PLANTTEXT)
+        pred_ans = str_xor(R, K)#48 bits
+        ans = ""
+        for i in range(0, len(pred_ans), 6):
+            tmp = pred_ans[i: i + 6]
+            row = int(tmp[0] + tmp[5], base = 2)
+            column = int(tmp[1:5], base = 2)
+            tmp = SUPER_BLOCK_TRANSFORMATION[i // 6][row][column]
+            tmp = bin(tmp)[2:]
+            tmp = "0" * (4 - len(tmp)) + tmp 
+            ans += tmp
+        ans = str_permutation(ans, FINAL_S_PERMUTATION)
+        return ans
+    C = FeistelCipher_D(P, F, list(reversed(subkeys)), block_size)
+    return C
+
+def DES_D(C, K, r = 16, block_size = 32, IP = STANDART_PERMUTATION):
+    if len(K) != 64:
         raise Exception("DES can't have a not 64 bits key")
 
     print('Редуцируем размер ключа:')
@@ -206,3 +239,53 @@ def DES_D(C, P, r = 16, block_size = 32, IP = STANDART_PERMUTATION):
         return ans
     C = FeistelCipher_E(P, F, list(reversed(subkeys)), block_size)
     return C
+
+def DES_D_Q(C, K, r = 16, block_size = 32, IP = STANDART_PERMUTATION):
+    if len(K) != 64:
+        raise Exception("DES can't have a not 64 bits key")
+    K = str_ex(K, REDUCTION_64_TO_56)
+    K_half = len(K) // 2
+    subkeys = [K]
+    for i in range(r):
+        tmp1 = subkeys[i][:K_half]
+        tmp2 = subkeys[i][K_half:]
+        tmp1 = str_left_shift(tmp1, STANDART_SHIFTS[i])
+        tmp2 = str_left_shift(tmp2, STANDART_SHIFTS[i])
+        subkeys.append(tmp1 + tmp2)
+    del subkeys[0]
+    for i in range(r):
+        subkeys[i] = str_ex(subkeys[i], REDUCTION_56_TO_48)
+    def F(R, K):
+        R = str_ex(R, EXPANSION_PLANTTEXT)
+        pred_ans = str_xor(R, K)#48 bits
+        ans = ""
+        for i in range(0, len(pred_ans), 6):
+            tmp = pred_ans[i: i + 6]
+            row = int(tmp[0] + tmp[5], base = 2)
+            column = int(tmp[1:5], base = 2)
+            tmp = SUPER_BLOCK_TRANSFORMATION[i // 6][row][column]
+            tmp = bin(tmp)[2:]
+            tmp = "0" * (4 - len(tmp)) + tmp 
+            ans += tmp
+        ans = str_permutation(ans, FINAL_S_PERMUTATION)
+        return ans
+    C = FeistelCipher_E(P, F, list(reversed(subkeys)), block_size)
+    return C
+
+if __name__ == '__main__':
+    from random import randint
+    flg = True
+    while flg:
+        P = "".join([str(randint(0, 1)) for _ in range(64)])
+        K = "".join([str(randint(0, 1)) for _ in range(64)])
+        print("P =", P)
+        print("K =", K)
+        C = DES_E_Q(P, K)
+        print("C =", C)
+        if P != DES_D_Q(C, K):
+            print("ERROR!")
+            print(f"D[C] = {DES_D_Q(C, K)}")
+            print(f"P    = {P}")
+        else:
+            print('OK')
+        flg = input() != "0"
