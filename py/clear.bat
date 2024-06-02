@@ -1,1 +1,1 @@
-rmdir __pycache__
+rmdir /S /Q __pycache__
