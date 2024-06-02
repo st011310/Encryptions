@@ -1,5 +1,5 @@
 from str_work import str_xor
-def FeistelCipher(P, F, subkeys, blocksize = 32):
+def FeistelCipher_E(P, F, subkeys, blocksize = 32):
     r = len(subkeys)
     if len(P) % blocksize != 0:
         P = "0" * (blocksize - len(P) % blocksize) + P
