@@ -1,3 +1,4 @@
+from per_work import is_permutstion
 def binary_string(S, encoding = 'cp1251'):
     ans = S.encode(encoding)
     ans = list(ans)
@@ -34,6 +35,3 @@ def str_left_shift(s, k):
     n = len(s)
     ans = [s[(i + k) % n] for i in range(n)]
     return "".join(ans)
-
-def is_permutstion(lst):
-    return len(set(lst)) == len(list(lst))

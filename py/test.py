@@ -22,6 +22,6 @@ print(K)
 print("Расширение ключа:")
 K = "0" * (64 - len(K)) + K
 print(K)
-C = DES.DES_E(K, P)
+C = DES.DES_E(P, K)
 print("Зашифрованное сообщение выглядит так:")
 print(C)

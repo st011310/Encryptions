@@ -3,6 +3,7 @@ from str_work import str_ex
 from str_work import str_left_shift
 from str_work import str_xor
 from str_work import str_permutation
+from per_work import permutation_inv
 from Feistel_cipher import FeistelCipher_D
 from Feistel_cipher import FeistelCipher_E
 
@@ -237,8 +238,8 @@ def DES_D(C, K, r = 16, block_size = 32, IP = STANDART_PERMUTATION):
         ans = str_permutation(ans, FINAL_S_PERMUTATION)
         print(ans)
         return ans
-    C = FeistelCipher_E(P, F, list(reversed(subkeys)), block_size)
-    return C
+    P = FeistelCipher_D(C, F, list(reversed(subkeys)), block_size)
+    return P
 
 def DES_D_Q(C, K, r = 16, block_size = 32, IP = STANDART_PERMUTATION):
     if len(K) != 64:
@@ -269,8 +270,8 @@ def DES_D_Q(C, K, r = 16, block_size = 32, IP = STANDART_PERMUTATION):
             ans += tmp
         ans = str_permutation(ans, FINAL_S_PERMUTATION)
         return ans
-    C = FeistelCipher_E(P, F, list(reversed(subkeys)), block_size)
-    return C
+    P = FeistelCipher_D(C, F, subkeys, block_size)
+    return P
 
 if __name__ == '__main__':
     from random import randint
@@ -280,11 +281,11 @@ if __name__ == '__main__':
         K = "".join([str(randint(0, 1)) for _ in range(64)])
         print("P =", P)
         print("K =", K)
-        C = DES_E_Q(P, K)
+        C = DES_E_Q(P, K, 1)
         print("C =", C)
-        if P != DES_D_Q(C, K):
+        if P != DES_D_Q(C, K, 1):
             print("ERROR!")
-            print(f"D[C] = {DES_D_Q(C, K)}")
+            print(f"D[C] = {DES_D_Q(C, K, 1)}")
             print(f"P    = {P}")
         else:
             print('OK')
