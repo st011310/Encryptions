@@ -10,21 +10,12 @@ def FeistelCipher_E(P, F, subkeys, blocksize = 32):
     for i in range(r):
         L, R = str_xor(R, F(L, subkeys[i])), L
         #L, R = R, str_xor(L, F(R, subkeys[i]))
-    C = L + R
+    C = R + L
     return C
 
 def FeistelCipher_D(C, F, subkeys, blocksize = 32):
     subkeys = list(reversed(subkeys))
-    r = len(subkeys)
-    if len(C) % blocksize != 0:
-        C = "0" * (blocksize - len(C) % blocksize) + C
-    if len(C) > 2 * blocksize:
-        return NotImplemented
-    L = C[:blocksize]
-    R = C[blocksize:]
-    for i in range(r):
-        L, R = R, str_xor(L, F(R, subkeys[i]))
-    P = L + R
+    P = FeistelCipher_E(C, F, subkeys, blocksize)
     return P
 
 if __name__ == '__main__':
@@ -45,4 +36,4 @@ if __name__ == '__main__':
             print(FeistelCipher_D(C, f, lst))
         else:
             print('OK')
-        flg = input() != 0
+        flg = input() != '0'
